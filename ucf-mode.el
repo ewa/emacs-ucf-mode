@@ -1,10 +1,9 @@
-;; Xilinx UCF files
-;; Copyright (C) Eric Anderson, 2013
-
+;;  Major mode for editing Xilinx UCF files
+;; 
 ;; This program is free software.  It is released under the terms of the GNU
 ;; GPL version 3 or later.  See the file LICENSE for full text.
-
-;; Commentary:
+;; 
+;; commentary:
 ;; To enable, add the following lines to your .emacs:
 ;;
 ;;    (autoload 'ucf-mode "ucf-mode" "Xilinx UCF mode" t)
@@ -27,7 +26,11 @@
       '("TNM_NET" "PERIOD" "OFFSET" "VALID" "BEFORE" "AFTER" "LOC" 
 	"IOSTANDARD" "FROM" "THRU" "TO" "TNM" "LOC" "RLOC" "BEL" 
 	"BUFG" "CLOCK_DEDICATED_ROUTE" "DIFF_TERM" "FAST" "FLOAT" 
-	"IODELAY_GROUP" "PART" "IDELAY_VALUE" "SIGNAL_PATTERN"))
+	"IODELAY_GROUP" "PART" "IDELAY_VALUE" "SIGNAL_PATTERN" 
+	"CONFIG_MODE" "DCI_CASCADE" "ENABLE_SUSPEND" "PROHIBIT"
+	"MCB_PERFORMANCE" "POST_CRC" "POST_CRC_ACTION" "POST_CRC_FREQ"
+	"POST_CRC_INIT_FLAG" "POST_CRC_SIGNAL" "POST_CRC_SOURCE"
+	"STEPPING" "VCCAUX" "VREF"))
 
 ;; "Constants" are pre-defined values (the "BAR" in "FOO=BAR") as well
 ;; as "tags" like TIG, and defined units like "MHz".
@@ -35,7 +38,9 @@
       ;; Miscelaneous values -- not exhaustive
       '("HIGH" "RISING" "FALLING" "IN" "DATAPATHONLY" "TIG" "FALSE" 
 	"TRUE" "YES" "NO" "PULLUP" "UPPER" "LOWER" "CLK" "OE" "SR" 
-	"DATA_GATE" "N/A" 
+	"DATA_GATE" "N/A" "FILTERED" "UNFILTERED" "STANDARD" 
+	"EXTENDED" "ENABLE" "DISABLE" "ONESHOT" "HALT" "CONTINUE"
+	"OFF" "ALWAYSACTIVE" "FREEZE" 
 	;; Units
 	"MHz" "GHz" "kHz" "ps" "ns" "micro" "ms" 
 	;; IOSTANDARDs -- believed to be exhaustive for 6-series parts
@@ -64,7 +69,36 @@
 	;; Misc
 	"HT_25" "RSDS_25" "LVPECL_25"))
 
-;; "Name-introducers" imply that the next symbol is a new name in the
+(setq things-with-xy-locations
+      ;; From UG625 v.13.4 pp47-49
+      '("BSCAN" "BUFDS" "BUFGCTRL" "BUFGMUX" "BUFHCE" "BUFH" "BUFIO2FB"
+	"BUFIO2" "BUFIODQS" "BUFIO""BUFO" "BUFPLL_MCB" "BUFPLL" "BUFR" 
+	"CAPTURE" "CFG_IO_ACCESS" "CRC32" "CRC64" "DCIRESET" "DCI" "DCM_ADV"
+	"DCM" "DNA_PORT" "DPM" "DSP48" "EFUSE_USR" "EMAC" "FIFO16"
+	"GLOBALSIG" "GT11CLK" "GT11" "GTPA1_DUAL" "GTP_DUAL" "GTXE1"
+	"GTX_DUAL" "IBUFDS_GTXE1" "ICAP" "IDELAYCTRL" "ILOGIC" "IOB" 
+	"IODELAY" "IPAD" "MCB" "MMCM_ADV" "MONITOR" "OCT_CAL" "OLOGIC"
+	"OPAD" "PCIE" "PCILOGIC" "PLL_ADV" "PMCD" "PMVBRAM" "PMVIOB" "PMV" 
+	"PPC405_AV" "PPC440" "PPR_FRAME" "RAMB16" "RAMB18" "RAMB36" "RAMB8"
+	"SLICE" "STARTUP" "SYSMON" "TEMAC" "TIEOFF" "USR_ACCESS"))
+
+(setq located-things-re
+      (concat "\\<"
+	      (regexp-opt things-with-xy-locations nil)
+	      "_X[0-9]+Y[0-9]+"	
+	      "\\>"))
+
+(setq things-with-numbers
+      '("INTERNAL_VREF_BANK" "VCCOSENSEMODE"))
+
+(setq numbered-things-re
+      (concat "\\<"
+	      (regexp-opt things-with-numbers nil)
+	      "[0-9]+"	
+	      "\\>"))
+
+
+;; "name-introducers" imply that the next symbol is a new name in the
 ;; constraint file. That is in a like "FOO BAR BAZ ...", if "FOO" is a
 ;; name-introducer, then "BAR" is a name.
 (setq ucf-name-introducers 
@@ -75,8 +109,11 @@
   nil
   `((,(regexp-opt ucf-constraint-keywords 'symbols) . 'font-lock-keyword-face) 
     (,(regexp-opt ucf-constraint-attributes-etc 'symbols) .  'font-lock-type-face)
+    (,numbered-things-re . 'font-lock-type-face)
     (,(regexp-opt ucf-constraint-constants 'symbols) .  'font-lock-constant-face)
-    (,(regexp-opt ucf-name-introducers 'symbols) "\\_<\\(.*?\\)\\_>\\(.+\\)" 
+    (,located-things-re . 'font-lock-constant-face)
+    ;; Anchored regexp should highlight the BAR in FOO BAR or FOO "BAR".
+    (,(regexp-opt ucf-name-introducers 'symbols) "\\_<\"?\\(.*?\\)\"?\\_>\\(.+\\)" 
      nil nil
      (1 'font-lock-variable-name-face)))
   '(".ucf\\'")
@@ -90,5 +127,8 @@
      ;; Quotes can be part of symbols.  That is, we expect
      ;; 'NET "FOO"' to define a net called '"FOO"'. 
      (modify-syntax-entry ?\" "_")
+     ;; Also, allow ? to be part of a symbol so that heierarchical 
+     ;; names are OK.
+     (modify-syntax-entry ?\? "_")
      ))
   "Major mode for editing Xilinx User Constraints Files")
