@@ -23,7 +23,7 @@
 ;; exhaustive!  I'm also including other "joining" keywords that say
 ;; what the constraint means, like FROM-THRU-TO, and PERIOD.
 (setq ucf-constraint-attributes-etc
-      '("TNM_NET" "PERIOD" "OFFSET" "VALID" "BEFORE" "AFTER" "LOC" 
+      '("TNM_NET" "TPTHRU" "PERIOD" "OFFSET" "VALID" "BEFORE" "AFTER" "LOC" 
 	"IOSTANDARD" "FROM" "THRU" "TO" "TNM" "LOC" "RLOC" "BEL" 
 	"BUFG" "CLOCK_DEDICATED_ROUTE" "DIFF_TERM" "FAST" "FLOAT" 
 	"IODELAY_GROUP" "PART" "IDELAY_VALUE" "SIGNAL_PATTERN" 
